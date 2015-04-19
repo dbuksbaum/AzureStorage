@@ -1338,16 +1338,22 @@ namespace Wintellect.Azure.Storage.Table {
       IDictionary<String, EntityProperty> ITableEntity.WriteEntity(OperationContext operationContext) {
          return Entity.WriteEntity(operationContext);
       }
-      /// <summary>Retrieves an entity from the table and maps it to a DynamicTableEntity.</summary>
-      /// <param name="at">The table to retrieve the entity from.</param>
-      /// <param name="partitionKey">The entity's partition key value.</param>
-      /// <param name="rowKey">The entity's row key value.</param>
-      /// <returns>A Task wrapping the entity's DynamicTableEntity.</returns>
-      public static async Task<DynamicTableEntity> FindAsync(AzureTable at, String partitionKey, String rowKey) {
-         TableResult tr = await at.ExecuteAsync(TableOperation.Retrieve(partitionKey.HtmlEncode(), rowKey.HtmlEncode())).ConfigureAwait(false);
-         if ((HttpStatusCode)tr.HttpStatusCode == HttpStatusCode.NotFound)
-            throw new EntityNotFoundException(at, partitionKey, rowKey);
-         return (DynamicTableEntity)tr.Result;
+     /// <summary>Retrieves an entity from the table and maps it to a DynamicTableEntity.</summary>
+     /// <param name="at">The table to retrieve the entity from.</param>
+     /// <param name="partitionKey">The entity's partition key value.</param>
+     /// <param name="rowKey">The entity's row key value.</param>
+     /// <param name="throwOnNotFound">True to throw when entity not found, false to return null. Defaults to true</param>
+     /// <returns>A Task wrapping the entity's DynamicTableEntity.</returns>
+     public static async Task<DynamicTableEntity> FindAsync(AzureTable at, String partitionKey, String rowKey, bool throwOnNotFound = true) {
+        //  added parameter throwOnNotFound defaulting to true
+        TableResult tr = await at.ExecuteAsync(TableOperation.Retrieve(partitionKey.HtmlEncode(), rowKey.HtmlEncode())).ConfigureAwait(false);
+        if ((HttpStatusCode) tr.HttpStatusCode == HttpStatusCode.NotFound)
+        { //  added this if check
+          if (!throwOnNotFound)
+            return null;
+          throw new EntityNotFoundException(at, partitionKey, rowKey);
+        }
+        return (DynamicTableEntity)tr.Result;
       }
 
       private readonly DynamicTableEntity Entity;
